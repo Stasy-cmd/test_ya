@@ -1,0 +1,6 @@
+data/correct_1.py ''
+data/correct_2.py 'hello\nworld\n\n'
+data/foo_1.py ''
+data/foo_2.py ''
+data/foo_3.py ''
+data/foo_4.py ''

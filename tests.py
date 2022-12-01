@@ -104,16 +104,6 @@ class TestForFunction(unittest.TestCase):
                     'CircleFactory()']
         assert check(str_test) is True
 
-    def test_check_call_def_incorrect(self):
-        """
-        Проверка работы функции 'check': неправильный вызове функции внутри файла
-        """
-        str_test = ['def CircleFactory():\n',
-                    '    print("hello")\n',
-                    '    print("world")\n',
-                    'CircleFactory1()']
-        assert check(str_test) is False
-
     def test_check_call_print(self):
         """
         Проверка работы функции 'check': вызов функции print() внутри файла

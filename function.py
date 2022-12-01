@@ -3,6 +3,7 @@ from typing import List, Optional
 from unittest import mock
 import io
 import re
+import ast
 
 
 def open_file(filename: str) -> Optional[List[str]]:
@@ -17,49 +18,44 @@ def open_file(filename: str) -> Optional[List[str]]:
     with open(filename, 'r', encoding='utf-8') as file:
         return file.readlines()
 
-
-def check(lines: List[str]) -> bool:
+def check(data) -> bool:
     """
-     Функция проверяет на имена классов и функций в файле студента.
-    :param lines: список строк из файла студента
-    :return: True в случае корректного файла, False - в случае ошибки.
+    Функция строит абстрактное синтаксическое дерево
+    и выполняет проверку имен пользовательских типов
+    :param data: список строк из файла
+    :return: True - дерево составлено и имена удовлетворяют правилам,
+             False - либо ошибки при составлении дерева, либо есть несоответствие названия правилам.
     """
+    arr_error = []
+    data = ''.join(data)
 
-    is_class = False
-    is_done = True
-    set_def = {'print', 'input'}
+    try:
+        items = ast.parse(data)
+    except SyntaxError:
+        return False
 
-    for line in lines:
-        if 'class' in line:
-            if re.match(r'class\s[A-Z]', line):
-                is_class = True
-            else:
-                is_done = False
+    def check_name(node: ast.Module, is_capital: bool=False) -> None:
+        """
+        Функция обходит синтаксическое дерево и проверяет название каждого узла
+        :param node: узел дерева
+        :param is_capital: с заглавной или строчной буквы должно начинаться название узла
+        """
 
-        elif 'def' in line:
-            if re.match(r'def\s[A-Z]', line):
-                is_class = False
-                name_func = re.split(r'def\s+', line.strip(':\n').split('(', maxsplit=1)[0])[1]
-                set_def.add(name_func)
-            elif is_class and re.match(r'\s{4}def\s[a-z]', line):
-                continue
-            else:
-                is_done = False
+        if 'name' in dir(node):
+            if is_capital and not re.match(r'[A-Z]', node.name):
+                arr_error.append(False)
+            elif not is_capital and not re.match(r'[a-z]', node.name):
+                arr_error.append(False)
+        else:
+            # Если нет дочерних узлов - передаем управление
+            return
 
-        # если пустая строчка или комментарий
-        elif not line.strip('\n').strip(' ') or re.match('#', line):
-            continue
+        # Применяем функцию check_name ко всем дочерним элементам (древовидная рекурсия)
+        list(map(check_name, node.body))
 
-        # если конструкция вне функции и вызывается функция, которая раньше была не определена
-        elif not re.match(r'\s{4}', line) or (not re.match(r'\s{8}', line) and is_class):
-            if line.strip('\n').split('(', maxsplit=1)[0] not in set_def:
-                is_done = False
-
-        if not is_done:
-            break
-
-    return is_done
-
+    for item in items.body:
+        check_name(item, True)
+    return len(arr_error) == 0
 
 def test_eval(data: List[str], out_result: str) -> bool:
     """
@@ -74,7 +70,6 @@ def test_eval(data: List[str], out_result: str) -> bool:
             return func_stdout.getvalue() == out_result
         except:
             return False
-
 
 def start(filename: str, expected_result: str) -> int:
     """

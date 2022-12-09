@@ -1,3 +1,4 @@
+import itertools
 import os
 from typing import List, Optional
 from unittest import mock
@@ -42,16 +43,22 @@ def check(data) -> bool:
         """
 
         if 'name' in dir(node):
-            if is_capital and not re.match(r'[A-Z]', node.name):
-                arr_error.append(False)
-            elif not is_capital and not re.match(r'[a-z]', node.name):
-                arr_error.append(False)
+            if not isinstance(node, ast.ClassDef):
+                if is_capital and not re.match(r'[A-Z]', node.name):
+                    arr_error.append(False)
+                elif not is_capital and not re.match(r'[a-z]', node.name):
+                    arr_error.append(False)
+                is_capital = True
+            else:
+                if not re.match(r'[A-Z]', node.name):
+                    arr_error.append(False)
+                is_capital = False
         else:
             # Если нет дочерних узлов - передаем управление
             return
 
         # Применяем функцию check_name ко всем дочерним элементам (древовидная рекурсия)
-        list(map(check_name, node.body))
+        list(map(check_name, node.body, itertools.repeat(is_capital)))
 
     for item in items.body:
         check_name(item, True)

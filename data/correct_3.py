@@ -2,7 +2,7 @@
 def CircleFactory():
     print('hello')
     print('world')
-    def methods():
+    def Methods():
         print('start')
 
 class Triangle():
